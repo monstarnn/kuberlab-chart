@@ -1,0 +1,66 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: kuberlab
+  name: cloud-dealer
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kuberlab
+        component: cloud-dealer
+    spec:
+      containers:
+        - name:  cloud-dealer
+          image: kuberlab/cloud-dealer:latest
+          env:
+          - name: DB_TYPE
+            value: postgresql
+          - name: BASE_URL
+            value: https://dev.kuberlab.io
+          - name: CREDENTIALS
+            value: /etc/cloud-dealer/credentials
+          - name: DATA_DIR
+            value: /dealer_db
+          - name: REDIS
+            value: redis:6379
+          - name: ELASTIC_URL
+            value: http://cirrus-es-svc:9200
+          - name: PG_HOST
+            value: postgresql
+          - name: PG_PWD
+            valueFrom:
+              secretKeyRef:
+                name: postgresql
+                key: postgres-password
+          - name: BLOWFISH_SALT
+            valueFrom:
+              secretKeyRef:
+                name: crypto
+                key: blowfish-salt
+          ports:
+          - containerPort: 8082
+            name: api
+          - containerPort: 8083
+            name: proxy
+          - containerPort: 12120
+            name: internal-rpc
+          volumeMounts:
+          - mountPath: /etc/cloud-dealer/credentials
+            name: credentials
+      volumes:
+      - name: credentials
+        secret:
+          secretName: app-credentials
+          items:
+          - key: github.json
+            path: github.json
+          - key: google.json
+            path: google.json
+          - key: smtp.json
+            path: smtp.json
+          - key: bitbucket.json
+            path: bitbucket.json
+          - key: admins.json
+            path: admins.json

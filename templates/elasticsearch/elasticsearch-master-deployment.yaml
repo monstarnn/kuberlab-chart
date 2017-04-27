@@ -1,0 +1,54 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cirrus-es-master
+  namespace: kuberlab
+  labels:
+    component: cirrus-es
+    type: master
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: cirrus-es
+        type: master
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      serviceAccountName: cirrus-es
+      containers:
+      - name: elasticsearch
+        env:
+        - name: SERVICE
+          value: cirrus-es-cluster
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: NODE_DATA
+          value: "false"
+        - name: ES_HEAP_SIZE
+          value: 512m
+        resources:
+          requests:
+            cpu: "25m"
+            memory: "512Mi"
+          limits:
+            cpu: "100m"
+            memory: "1Gi"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9200
+          initialDelaySeconds: 300
+          timeoutSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 9200
+          timeoutSeconds: 30
+        image: jetstack/elasticsearch-pet:2.4.0
+        ports:
+        - containerPort: 9300
+          name: transport

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: kuberlab
+    component: cloud-dealer
+  name: cloud-dealer
+  namespace: kuberlab
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 8082
+    protocol: TCP
+    targetPort: 8082
+  - name: rpc
+    port: 12120
+    protocol: TCP
+    targetPort: 12120
+  selector:
+    app: kuberlab
+    component: cloud-dealer

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cirrus-es-svc
+  namespace: kuberlab
+spec:
+  ports:
+    - port: 9200
+      targetPort: http
+  selector:
+    component: cirrus-es
+    type: client

@@ -1,0 +1,70 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: cirrus-es-data
+  namespace: kuberlab
+  labels:
+    component: cirrus-es
+    type: data
+spec:
+  serviceName: cirrus-es-data
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: cirrus-es
+        type: data
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      serviceAccountName: cirrus-es
+      containers:
+      - name: elasticsearch
+        env:
+        - name: SERVICE
+          value: cirrus-es-cluster
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: NODE_MASTER
+          value: "false"
+        - name: ES_HEAP_SIZE
+          value: "2048m"
+        image: jetstack/elasticsearch-pet:2.4.0
+        ports:
+        - containerPort: 9300
+          name: transport
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "2Gi"
+          limits:
+            cpu: "500m"
+            memory: "4Gi"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9200
+          initialDelaySeconds: 300
+          timeoutSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 9200
+          timeoutSeconds: 30
+        volumeMounts:
+        - mountPath: /usr/share/elasticsearch/data
+          name: elasticsearch-data
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/bash","/pre-stop-hook.sh"]
+      volumes:
+        - name: elasticsearch-data
+          persistentVolumeClaim:
+            claimName: elasticsearch-data
